@@ -58,7 +58,10 @@ SESSION.headers.update(
         )
     }
 )
-
+SESSION.proxies.update({
+    "http": "http://8.219.229.53:5060",
+    "https": "http://8.219.229.53:5060",
+})
 
 def retry_on_network_error(max_attempts: int = 5, base_delay: float = 2.0, max_delay: float = 30.0):
     def decorator(func):

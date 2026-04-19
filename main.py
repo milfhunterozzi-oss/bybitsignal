@@ -1,3 +1,4 @@
+import html
 import json
 import logging
 import os
@@ -58,10 +59,11 @@ SESSION.headers.update(
         )
     }
 )
-SESSION.proxies.update({
-    "http": "http://8.219.229.53:5060",
-    "https": "http://8.219.229.53:5060",
-})
+_proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY")
+if _proxy:
+    SESSION.proxies.update({"http": _proxy, "https": _proxy})
+    log.info("Using proxy: %s", _proxy)
+
 
 def retry_on_network_error(max_attempts: int = 5, base_delay: float = 2.0, max_delay: float = 30.0):
     def decorator(func):
@@ -528,8 +530,8 @@ def main() -> None:
             try:
                 run_strategy(config)
             except Exception as exc:
-                error_message = f"⚠️ <b>Bybit strategy error</b>\n{exc}"
-                log.error(error_message)
+                log.error("Strategy error: %s", exc)
+                error_message = f"⚠️ <b>Bybit strategy error</b>\n{html.escape(str(exc))}"
                 send_telegram(error_message, config)
             sleep_seconds = seconds_until_next_rebalance(config.rebalance_hour_utc)
             next_run = datetime.now(timezone.utc) + timedelta(seconds=sleep_seconds)
@@ -539,8 +541,8 @@ def main() -> None:
         try:
             run_strategy(config)
         except Exception as exc:
-            error_message = f"⚠️ <b>Bybit strategy error</b>\n{exc}"
-            log.error(error_message)
+            log.error("Strategy error: %s", exc)
+            error_message = f"⚠️ <b>Bybit strategy error</b>\n{html.escape(str(exc))}"
             send_telegram(error_message, config)
 
 
